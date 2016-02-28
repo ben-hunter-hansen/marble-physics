@@ -1,0 +1,28 @@
+{
+  "name": "marble-physics",
+  "version": "1.0.0",
+  "description": "A 3D marble physics game made with TypeScript and THREE.js",
+  "main": "src/Main.js",
+  "scripts": {
+    "server": "python -m SimpleHTTPServer",
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "author": "Ben Hansen",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-loader": "^6.2.4",
+    "mathjs": "^2.7.0",
+    "orbit-controls": "^1.0.4",
+    "stats-js": "^1.0.0-alpha1",
+    "three": "^0.74.0",
+    "ts-loader": "^0.8.1",
+    "typescript": "^1.8.2",
+    "webpack": "^1.12.14"
+  },
+  "dependencies": {
+    "mathjs": "^2.7.0",
+    "stats-js": "^1.0.0-alpha1",
+    "three": "^0.74.0"
+  }
+}

@@ -1,0 +1,22 @@
+
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "sourceMap": true
+  },
+  "files": [
+    "src/Util/Keyboard.ts",
+    "src/Util/Texture.ts",
+    "src/Config/Viewport.ts",
+    "src/Config/Assets.ts",
+    "src/Engine/Engine.ts",
+    "src/Engine/Camera.ts",
+    "src/Engine/Ground.ts",
+    "src/Engine/Lighting.ts",
+    "src/Engine/Skybox.ts",
+    "src/World/Marble.ts",
+    "src/Main.ts",
+    "typings/tsd.d.ts"
+  ]
+}
