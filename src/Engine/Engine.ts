@@ -2,39 +2,64 @@ import { Camera } from "./Camera";
 import { Ground } from "./Ground";
 import { Lighting } from "./Lighting";
 import { Skybox } from "./Skybox";
-import { Texture } from "../Util/Texture";
+import { TextureLoader } from "../Util/TextureLoader";
 import { Assets } from "../Config/Assets";
-import { Marble } from "../World/Marble";
+import { World } from "../World/World";
 
 export class Engine {
     
-    static start(renderer: THREE.WebGLRenderer, scene: THREE.Scene) {
-        let camera = Camera.create();
-        
-        scene.add(camera);
-        camera.lookAt(scene.position);
-        
-        Lighting.initCamLight(scene);
-        
-        Texture.load(Assets.FLOOR_TEXTURE).then((texture) => {
-            Ground.init(texture, scene);
-        });
-        
+    private renderer: THREE.WebGLRenderer;
+    private scene: THREE.Scene;
+    private camera: THREE.Camera;
     
-        Skybox.init(scene);
+    constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene) {
+        this.renderer = renderer;
+        this.scene = scene;
+        this.camera = Camera.create();
         
-        scene.add(Marble.createMesh());
+        this.scene.add(this.camera);
+        this.camera.lookAt(this.scene.position);
+    }
+    
+    lightsOn(): void {
+        Lighting.initCamLight(this.scene);
+    }
+    
+    drawGroud(): Promise<Engine> {
+        return new Promise((resolve, reject) => {
+            const texLoader = new TextureLoader();
+            texLoader.load(Assets.FLOOR_TEXTURE).then((texture) => {
+                Ground.init(texture, this.scene);
+                resolve(this);
+            });
+        });
+    }
+    
+    drawSkybox(): Promise<Engine> {
+        Skybox.init(this.scene);
         
-        function animate() {
-            requestAnimationFrame(animate);
-            render();
-        }
+        // This will be async at some point
+        return Promise.resolve(this);
+    }
+    
+    createWorld(): Promise<Engine> {
+        const world = new World(this.scene);
+        world.init();
         
-        
-        function render() {
-            renderer.render(scene, camera);
-        }
-        
-        animate();
+        // This will be async at some point
+        return Promise.resolve(this);
+    }
+    
+    render(): void {
+        this.renderer.render(this.scene, this.camera);
+    }
+    
+    animate(): void {
+        requestAnimationFrame(() => this.animate());
+        this.render();
+    }
+    
+    start(): void {
+        this.animate();
     }
 }

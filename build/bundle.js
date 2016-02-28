@@ -52,8 +52,16 @@
 	    var renderer = new THREE.WebGLRenderer({ antialias: true });
 	    renderer.setSize(Viewport_1.Viewport.SCREEN_WIDTH, Viewport_1.Viewport.SCREEN_HEIGHT);
 	    document.body.appendChild(renderer.domElement);
-	    // Start game engine
-	    Engine_1.Engine.start(renderer, new THREE.Scene());
+	    // Initialize game engine
+	    var engine = new Engine_1.Engine(renderer, new THREE.Scene());
+	    // Turn on the lights
+	    engine.lightsOn();
+	    // Carry out async initializations,
+	    // then begin the game loop/
+	    engine.drawGroud()
+	        .then(function (engine) { return engine.drawSkybox(); })
+	        .then(function (engine) { return engine.createWorld(); })
+	        .then(function (engine) { return engine.start(); });
 	}
 	main();
 
@@ -67,30 +75,51 @@
 	var Ground_1 = __webpack_require__(4);
 	var Lighting_1 = __webpack_require__(5);
 	var Skybox_1 = __webpack_require__(6);
-	var Texture_1 = __webpack_require__(7);
+	var TextureLoader_1 = __webpack_require__(7);
 	var Assets_1 = __webpack_require__(8);
-	var Marble_1 = __webpack_require__(9);
+	var World_1 = __webpack_require__(9);
 	var Engine = (function () {
-	    function Engine() {
+	    function Engine(renderer, scene) {
+	        this.renderer = renderer;
+	        this.scene = scene;
+	        this.camera = Camera_1.Camera.create();
+	        this.scene.add(this.camera);
+	        this.camera.lookAt(this.scene.position);
 	    }
-	    Engine.start = function (renderer, scene) {
-	        var camera = Camera_1.Camera.create();
-	        scene.add(camera);
-	        camera.lookAt(scene.position);
-	        Lighting_1.Lighting.initCamLight(scene);
-	        Texture_1.Texture.load(Assets_1.Assets.FLOOR_TEXTURE).then(function (texture) {
-	            Ground_1.Ground.init(texture, scene);
+	    Engine.prototype.lightsOn = function () {
+	        Lighting_1.Lighting.initCamLight(this.scene);
+	    };
+	    Engine.prototype.drawGroud = function () {
+	        var _this = this;
+	        return new Promise(function (resolve, reject) {
+	            var texLoader = new TextureLoader_1.TextureLoader();
+	            texLoader.load(Assets_1.Assets.FLOOR_TEXTURE).then(function (texture) {
+	                Ground_1.Ground.init(texture, _this.scene);
+	                resolve(_this);
+	            });
 	        });
-	        Skybox_1.Skybox.init(scene);
-	        scene.add(Marble_1.Marble.createMesh());
-	        function animate() {
-	            requestAnimationFrame(animate);
-	            render();
-	        }
-	        function render() {
-	            renderer.render(scene, camera);
-	        }
-	        animate();
+	    };
+	    Engine.prototype.drawSkybox = function () {
+	        Skybox_1.Skybox.init(this.scene);
+	        // This will be async at some point
+	        return Promise.resolve(this);
+	    };
+	    Engine.prototype.createWorld = function () {
+	        var world = new World_1.World(this.scene);
+	        world.init();
+	        // This will be async at some point
+	        return Promise.resolve(this);
+	    };
+	    Engine.prototype.render = function () {
+	        this.renderer.render(this.scene, this.camera);
+	    };
+	    Engine.prototype.animate = function () {
+	        var _this = this;
+	        requestAnimationFrame(function () { return _this.animate(); });
+	        this.render();
+	    };
+	    Engine.prototype.start = function () {
+	        this.animate();
 	    };
 	    return Engine;
 	}());
@@ -197,16 +226,16 @@
 /***/ function(module, exports) {
 
 	"use strict";
-	var Texture = (function () {
-	    function Texture() {
+	var TextureLoader = (function () {
+	    function TextureLoader() {
 	    }
-	    Texture.load = function (url) {
+	    TextureLoader.prototype.load = function (url) {
 	        var loader = new THREE.TextureLoader();
 	        return Promise.resolve(loader.load(url));
 	    };
-	    return Texture;
+	    return TextureLoader;
 	}());
-	exports.Texture = Texture;
+	exports.TextureLoader = TextureLoader;
 
 
 /***/ },
@@ -222,6 +251,24 @@
 
 /***/ },
 /* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var Marble_1 = __webpack_require__(10);
+	var World = (function () {
+	    function World(scene) {
+	        this.scene = scene;
+	    }
+	    World.prototype.init = function () {
+	        this.scene.add(Marble_1.Marble.createMesh());
+	    };
+	    return World;
+	}());
+	exports.World = World;
+
+
+/***/ },
+/* 10 */
 /***/ function(module, exports) {
 
 	"use strict";
