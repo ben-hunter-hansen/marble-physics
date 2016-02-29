@@ -2,47 +2,64 @@ import { Camera } from "./Camera";
 import { Ground } from "./Ground";
 import { Lighting } from "./Lighting";
 import { Skybox } from "./Skybox";
-import { TextureLoader } from "../Util/TextureLoader";
-import { Assets } from "../Config/Assets";
+import { TextureLoader, Keyboard } from "../Util/Util";
+import { AssetPaths } from "../Config/AssetPaths";
 import { World } from "../World/World";
 
-export class Engine {
+/**
+ * Singleton driver class for the marble game
+ */
+class Engine {
     
     private renderer: THREE.WebGLRenderer;
     private scene: THREE.Scene;
     private camera: THREE.Camera;
+    private keyboard: Keyboard;
     
-    constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene) {
+    constructor(renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
+    }
+    
+    public setCamera(camera: THREE.Camera): Engine {
+        this.camera = camera;
+        return this;
+    }
+    
+    public setScene(scene: THREE.Scene): Engine {
         this.scene = scene;
-        this.camera = Camera.create();
-        
+        return this;
+    }
+    
+    public setKeyboard(keyboard: Keyboard) {
+        this.keyboard = keyboard;
+        return this;
+    }
+    
+    public initCameraAndScene(): Engine {
         this.scene.add(this.camera);
         this.camera.lookAt(this.scene.position);
-    }
-    
-    lightsOn(): void {
         Lighting.initCamLight(this.scene);
+        return this;
     }
     
-    drawGroud(): Promise<Engine> {
+    public drawGroud(): Promise<Engine> {
         return new Promise((resolve, reject) => {
             const texLoader = new TextureLoader();
-            texLoader.load(Assets.FLOOR_TEXTURE).then((texture) => {
+            texLoader.load(AssetPaths.FLOOR_TEXTURE).then((texture) => {
                 Ground.init(texture, this.scene);
                 resolve(this);
             });
         });
     }
     
-    drawSkybox(): Promise<Engine> {
-        Skybox.init(this.scene);
+    public drawSkybox(skybox: Skybox): Promise<Engine> {
+        skybox.attachTo(this.scene);
         
         // This will be async at some point
         return Promise.resolve(this);
     }
     
-    createWorld(): Promise<Engine> {
+    public createWorld(): Promise<Engine> {
         const world = new World(this.scene);
         world.init();
         
@@ -50,7 +67,7 @@ export class Engine {
         return Promise.resolve(this);
     }
     
-    render(): void {
+    public render(): void {
         this.renderer.render(this.scene, this.camera);
     }
     
@@ -63,3 +80,5 @@ export class Engine {
         this.animate();
     }
 }
+
+export { Engine, Skybox, Ground, Camera, Lighting}

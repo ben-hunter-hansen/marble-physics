@@ -1,4 +1,6 @@
-const Viewport = {
+import { Viewport } from "../Types/Types"
+
+const ViewportDefaults: Viewport = {
     SCREEN_WIDTH: window.innerWidth,
     SCREEN_HEIGHT: window.innerHeight,
     FOV: 45,
@@ -7,4 +9,4 @@ const Viewport = {
     FAR: 1000
 }
 
-export { Viewport };
+export { ViewportDefaults };

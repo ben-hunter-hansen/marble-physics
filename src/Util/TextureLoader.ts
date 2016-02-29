@@ -1,4 +1,4 @@
-import { IAssetLoader } from "./IAssetLoader";
+import { IAssetLoader } from "../Types/Types";
 
 export class TextureLoader implements IAssetLoader<THREE.Texture> {
     constructor() {}

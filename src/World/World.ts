@@ -6,7 +6,7 @@ export class World {
         this.scene = scene;
     }
     
-    init(): void {
+    public init(): void {
         this.scene.add(Marble.createMesh());
     }
 }

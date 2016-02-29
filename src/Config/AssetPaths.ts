@@ -1,6 +1,6 @@
-const Assets = {
+const AssetPaths = {
     FLOOR_TEXTURE: 'assets/grasslight-big.jpg'
 };
 
-export { Assets };
+export { AssetPaths };
 

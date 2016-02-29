@@ -5,5 +5,4 @@ export class Lighting {
         light.position.set(100,250,100);
         scene.add(light);
     }
-    
 }

@@ -1,10 +1,26 @@
-export class Skybox {
+import { MeshData } from "../Types/MeshData";
+import { Mesh } from "../Types/Mesh";
+
+class Skybox extends Mesh {
     
-    static init(scene: THREE.Scene) {
-        let skyBoxGeometry = new THREE.CubeGeometry( 1000, 1000, 1000 );
-	    let skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x9999ff, side: THREE.BackSide } );
-	    let skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
+    private static DEFAULT_MESH_CONFIG: MeshData = {
+        material: new THREE.MeshBasicMaterial({ 
+            color: 0x9999ff, 
+            side: THREE.BackSide
+        }),
+        geometry: new THREE.CubeGeometry(1000, 1000, 1000)
+    };
+    
+    constructor(config?: MeshData) {
+        super();
         
-        scene.add(skyBox);
-    } 
+        this.config = config ? config : Skybox.DEFAULT_MESH_CONFIG;
+        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
+    }
+    
+    public attachTo(scene: THREE.Scene) {
+        scene.add(this.mesh);
+    }
 }
+
+export { Skybox }

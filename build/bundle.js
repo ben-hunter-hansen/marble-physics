@@ -46,20 +46,23 @@
 
 	"use strict";
 	var Engine_1 = __webpack_require__(1);
-	var Viewport_1 = __webpack_require__(3);
+	var Util_1 = __webpack_require__(7);
+	var Config_1 = __webpack_require__(13);
 	function main() {
 	    // Create rendering context and attach it to the document
 	    var renderer = new THREE.WebGLRenderer({ antialias: true });
-	    renderer.setSize(Viewport_1.Viewport.SCREEN_WIDTH, Viewport_1.Viewport.SCREEN_HEIGHT);
+	    renderer.setSize(Config_1.ViewportDefaults.SCREEN_WIDTH, Config_1.ViewportDefaults.SCREEN_HEIGHT);
 	    document.body.appendChild(renderer.domElement);
 	    // Initialize game engine
-	    var engine = new Engine_1.Engine(renderer, new THREE.Scene());
-	    // Turn on the lights
-	    engine.lightsOn();
+	    var engine = new Engine_1.Engine(renderer)
+	        .setKeyboard(new Util_1.Keyboard())
+	        .setCamera(Engine_1.Camera.create(Config_1.ViewportDefaults))
+	        .setScene(new THREE.Scene())
+	        .initCameraAndScene();
 	    // Carry out async initializations,
-	    // then begin the game loop/
+	    // then begin the game loop
 	    engine.drawGroud()
-	        .then(function (engine) { return engine.drawSkybox(); })
+	        .then(function (engine) { return engine.drawSkybox(new Engine_1.Skybox()); })
 	        .then(function (engine) { return engine.createWorld(); })
 	        .then(function (engine) { return engine.start(); });
 	}
@@ -72,35 +75,53 @@
 
 	"use strict";
 	var Camera_1 = __webpack_require__(2);
-	var Ground_1 = __webpack_require__(4);
-	var Lighting_1 = __webpack_require__(5);
-	var Skybox_1 = __webpack_require__(6);
-	var TextureLoader_1 = __webpack_require__(7);
-	var Assets_1 = __webpack_require__(8);
-	var World_1 = __webpack_require__(9);
+	exports.Camera = Camera_1.Camera;
+	var Ground_1 = __webpack_require__(3);
+	exports.Ground = Ground_1.Ground;
+	var Lighting_1 = __webpack_require__(4);
+	exports.Lighting = Lighting_1.Lighting;
+	var Skybox_1 = __webpack_require__(5);
+	exports.Skybox = Skybox_1.Skybox;
+	var Util_1 = __webpack_require__(7);
+	var AssetPaths_1 = __webpack_require__(10);
+	var World_1 = __webpack_require__(11);
+	/**
+	 * Singleton driver class for the marble game
+	 */
 	var Engine = (function () {
-	    function Engine(renderer, scene) {
+	    function Engine(renderer) {
 	        this.renderer = renderer;
+	    }
+	    Engine.prototype.setCamera = function (camera) {
+	        this.camera = camera;
+	        return this;
+	    };
+	    Engine.prototype.setScene = function (scene) {
 	        this.scene = scene;
-	        this.camera = Camera_1.Camera.create();
+	        return this;
+	    };
+	    Engine.prototype.setKeyboard = function (keyboard) {
+	        this.keyboard = keyboard;
+	        return this;
+	    };
+	    Engine.prototype.initCameraAndScene = function () {
 	        this.scene.add(this.camera);
 	        this.camera.lookAt(this.scene.position);
-	    }
-	    Engine.prototype.lightsOn = function () {
 	        Lighting_1.Lighting.initCamLight(this.scene);
+	        return this;
 	    };
 	    Engine.prototype.drawGroud = function () {
 	        var _this = this;
 	        return new Promise(function (resolve, reject) {
-	            var texLoader = new TextureLoader_1.TextureLoader();
-	            texLoader.load(Assets_1.Assets.FLOOR_TEXTURE).then(function (texture) {
+	            var texLoader = new Util_1.TextureLoader();
+	            texLoader.load(AssetPaths_1.AssetPaths.FLOOR_TEXTURE).then(function (texture) {
 	                Ground_1.Ground.init(texture, _this.scene);
 	                resolve(_this);
 	            });
 	        });
 	    };
-	    Engine.prototype.drawSkybox = function () {
-	        Skybox_1.Skybox.init(this.scene);
+	    Engine.prototype.drawSkybox = function (skybox) {
+	        skybox.attachTo(this.scene);
 	        // This will be async at some point
 	        return Promise.resolve(this);
 	    };
@@ -128,15 +149,14 @@
 
 /***/ },
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	"use strict";
-	var Viewport_1 = __webpack_require__(3);
 	var Camera = (function () {
 	    function Camera() {
 	    }
-	    Camera.create = function () {
-	        var cam = new THREE.PerspectiveCamera(Viewport_1.Viewport.FOV, Viewport_1.Viewport.ASPECT_RATIO, Viewport_1.Viewport.NEAR, Viewport_1.Viewport.FAR);
+	    Camera.create = function (config) {
+	        var cam = new THREE.PerspectiveCamera(config.FOV, config.ASPECT_RATIO, config.NEAR, config.FAR);
 	        cam.position.set(0, 150, 400);
 	        return cam;
 	    };
@@ -147,22 +167,6 @@
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var Viewport = {
-	    SCREEN_WIDTH: window.innerWidth,
-	    SCREEN_HEIGHT: window.innerHeight,
-	    FOV: 45,
-	    ASPECT_RATIO: window.innerWidth / window.innerHeight,
-	    NEAR: 0.1,
-	    FAR: 1000
-	};
-	exports.Viewport = Viewport;
-
-
-/***/ },
-/* 4 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -185,7 +189,7 @@
 
 
 /***/ },
-/* 5 */
+/* 4 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -203,26 +207,105 @@
 
 
 /***/ },
-/* 6 */
-/***/ function(module, exports) {
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Skybox = (function () {
-	    function Skybox() {
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Mesh_1 = __webpack_require__(6);
+	var Skybox = (function (_super) {
+	    __extends(Skybox, _super);
+	    function Skybox(config) {
+	        _super.call(this);
+	        this.config = config ? config : Skybox.DEFAULT_MESH_CONFIG;
+	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
 	    }
-	    Skybox.init = function (scene) {
-	        var skyBoxGeometry = new THREE.CubeGeometry(1000, 1000, 1000);
-	        var skyBoxMaterial = new THREE.MeshBasicMaterial({ color: 0x9999ff, side: THREE.BackSide });
-	        var skyBox = new THREE.Mesh(skyBoxGeometry, skyBoxMaterial);
-	        scene.add(skyBox);
+	    Skybox.prototype.attachTo = function (scene) {
+	        scene.add(this.mesh);
+	    };
+	    Skybox.DEFAULT_MESH_CONFIG = {
+	        material: new THREE.MeshBasicMaterial({
+	            color: 0x9999ff,
+	            side: THREE.BackSide
+	        }),
+	        geometry: new THREE.CubeGeometry(1000, 1000, 1000)
 	    };
 	    return Skybox;
-	}());
+	}(Mesh_1.Mesh));
 	exports.Skybox = Skybox;
 
 
 /***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Mesh = (function () {
+	    function Mesh() {
+	    }
+	    return Mesh;
+	}());
+	exports.Mesh = Mesh;
+
+
+/***/ },
 /* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var Keyboard_1 = __webpack_require__(8);
+	exports.Keyboard = Keyboard_1.Keyboard;
+	var TextureLoader_1 = __webpack_require__(9);
+	exports.TextureLoader = TextureLoader_1.TextureLoader;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Keyboard = (function () {
+	    function Keyboard(element) {
+	        var _this = this;
+	        this.keyStates = {
+	            87: { ascii: "w", pressed: false },
+	            65: { ascii: "a", pressed: false },
+	            83: { ascii: "s", pressed: false },
+	            67: { ascii: "d", pressed: false }
+	        };
+	        this.element = element || document;
+	        this.element.addEventListener("keydown", function (e) {
+	            if (e.keyCode in _this.keyStates)
+	                _this.setKeyState(e);
+	        });
+	        this.element.addEventListener("keyup", function (e) {
+	            if (e.keyCode in _this.keyStates)
+	                _this.setKeyState(e);
+	        });
+	    }
+	    Keyboard.prototype.setKeyState = function (e) {
+	        this.keyStates[e.keyCode].pressed = (e.type === 'keydown');
+	    };
+	    Keyboard.prototype.isKeyPressed = function (key) {
+	        return this.keyStates[Keyboard.KEYS[key]].pressed;
+	    };
+	    Keyboard.KEYS = {
+	        "w": 87,
+	        "a": 65,
+	        "s": 83,
+	        "d": 67
+	    };
+	    return Keyboard;
+	}());
+	exports.Keyboard = Keyboard;
+
+
+/***/ },
+/* 9 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -239,22 +322,22 @@
 
 
 /***/ },
-/* 8 */
+/* 10 */
 /***/ function(module, exports) {
 
 	"use strict";
-	var Assets = {
+	var AssetPaths = {
 	    FLOOR_TEXTURE: 'assets/grasslight-big.jpg'
 	};
-	exports.Assets = Assets;
+	exports.AssetPaths = AssetPaths;
 
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Marble_1 = __webpack_require__(10);
+	var Marble_1 = __webpack_require__(12);
 	var World = (function () {
 	    function World(scene) {
 	        this.scene = scene;
@@ -268,7 +351,7 @@
 
 
 /***/ },
-/* 10 */
+/* 12 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -285,6 +368,33 @@
 	    return Marble;
 	}());
 	exports.Marble = Marble;
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var AssetPaths_1 = __webpack_require__(10);
+	exports.AssetPaths = AssetPaths_1.AssetPaths;
+	var ViewportDefaults_1 = __webpack_require__(14);
+	exports.ViewportDefaults = ViewportDefaults_1.ViewportDefaults;
+
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var ViewportDefaults = {
+	    SCREEN_WIDTH: window.innerWidth,
+	    SCREEN_HEIGHT: window.innerHeight,
+	    FOV: 45,
+	    ASPECT_RATIO: window.innerWidth / window.innerHeight,
+	    NEAR: 0.1,
+	    FAR: 1000
+	};
+	exports.ViewportDefaults = ViewportDefaults;
 
 
 /***/ }
