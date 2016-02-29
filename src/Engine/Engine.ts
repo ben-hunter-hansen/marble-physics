@@ -46,12 +46,12 @@ class Engine {
         
         const ground = new Ground(this.textures[AssetPaths.Ground.ID]);
         const skybox = new Skybox();
+        const marble = new Marble();
         
         ground.attachTo(this.scene);
         skybox.attachTo(this.scene);
+        marble.attachTo(this.scene);
         
-        // TODO: Make marble like the others =)
-        this.scene.add(Marble.createMesh());
         return this;
     }
     

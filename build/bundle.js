@@ -85,7 +85,7 @@
 	exports.Skybox = World_1.Skybox;
 	exports.Ground = World_1.Ground;
 	/**
-	 * Singleton driver class for the marble game
+	 *  driver class for the marble game
 	 */
 	var Engine = (function () {
 	    function Engine(renderer) {
@@ -113,10 +113,10 @@
 	        Lighting_1.Lighting.initCamLight(this.scene);
 	        var ground = new World_1.Ground(this.textures[AssetPaths_1.AssetPaths.Ground.ID]);
 	        var skybox = new World_1.Skybox();
+	        var marble = new World_1.Marble();
 	        ground.attachTo(this.scene);
 	        skybox.attachTo(this.scene);
-	        // TODO: Make marble like the others =)
-	        this.scene.add(World_1.Marble.createMesh());
+	        marble.attachTo(this.scene);
 	        return this;
 	    };
 	    Engine.prototype.render = function () {
@@ -189,7 +189,7 @@
 	"use strict";
 	var Marble_1 = __webpack_require__(6);
 	exports.Marble = Marble_1.Marble;
-	var Ground_1 = __webpack_require__(7);
+	var Ground_1 = __webpack_require__(9);
 	exports.Ground = Ground_1.Ground;
 	var Skybox_1 = __webpack_require__(10);
 	exports.Skybox = Skybox_1.Skybox;
@@ -197,26 +197,6 @@
 
 /***/ },
 /* 6 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var Marble = (function () {
-	    function Marble() {
-	    }
-	    Marble.createMesh = function () {
-	        var geometry = new THREE.SphereGeometry(30, 32, 16);
-	        var material = new THREE.MeshLambertMaterial({ color: 0x000088 });
-	        var mesh = new THREE.Mesh(geometry, material);
-	        mesh.position.set(0, 40, 0);
-	        return mesh;
-	    };
-	    return Marble;
-	}());
-	exports.Marble = Marble;
-
-
-/***/ },
-/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -225,7 +205,66 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Types_1 = __webpack_require__(8);
+	var Types_1 = __webpack_require__(7);
+	var Marble = (function (_super) {
+	    __extends(Marble, _super);
+	    function Marble(config) {
+	        _super.call(this);
+	        this.config = config ? config : Marble.DEFAULT_MESH_CONFIG;
+	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
+	        this.mesh.position.set(0, 40, 0);
+	    }
+	    Marble.prototype.attachTo = function (scene) {
+	        scene.add(this.mesh);
+	    };
+	    Marble.prototype.getPosition = function () {
+	        return this.mesh.position;
+	    };
+	    Marble.prototype.setPosition = function (pos) {
+	        this.mesh.position.set(pos.x, pos.y, pos.z);
+	    };
+	    Marble.DEFAULT_MESH_CONFIG = {
+	        material: new THREE.MeshLambertMaterial({ color: 0x000088 }),
+	        geometry: new THREE.SphereGeometry(30, 32, 16)
+	    };
+	    return Marble;
+	}(Types_1.Mesh));
+	exports.Marble = Marble;
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var Mesh_1 = __webpack_require__(8);
+	exports.Mesh = Mesh_1.Mesh;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Mesh = (function () {
+	    function Mesh() {
+	    }
+	    return Mesh;
+	}());
+	exports.Mesh = Mesh;
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Types_1 = __webpack_require__(7);
 	var Ground = (function (_super) {
 	    __extends(Ground, _super);
 	    function Ground(texture, config) {
@@ -245,31 +284,15 @@
 	    Ground.prototype.attachTo = function (scene) {
 	        scene.add(this.mesh);
 	    };
+	    Ground.prototype.getPosition = function () {
+	        return this.mesh.position;
+	    };
+	    Ground.prototype.setPosition = function (pos) {
+	        this.mesh.position.set(pos.x, pos.y, pos.z);
+	    };
 	    return Ground;
 	}(Types_1.Mesh));
 	exports.Ground = Ground;
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var Mesh_1 = __webpack_require__(9);
-	exports.Mesh = Mesh_1.Mesh;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var Mesh = (function () {
-	    function Mesh() {
-	    }
-	    return Mesh;
-	}());
-	exports.Mesh = Mesh;
 
 
 /***/ },
@@ -282,7 +305,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Mesh_1 = __webpack_require__(9);
+	var Mesh_1 = __webpack_require__(8);
 	var Skybox = (function (_super) {
 	    __extends(Skybox, _super);
 	    function Skybox(config) {
@@ -292,6 +315,12 @@
 	    }
 	    Skybox.prototype.attachTo = function (scene) {
 	        scene.add(this.mesh);
+	    };
+	    Skybox.prototype.getPosition = function () {
+	        return this.mesh.position;
+	    };
+	    Skybox.prototype.setPosition = function (pos) {
+	        this.mesh.position.set(pos.x, pos.y, pos.z);
 	    };
 	    Skybox.DEFAULT_MESH_CONFIG = {
 	        material: new THREE.MeshBasicMaterial({

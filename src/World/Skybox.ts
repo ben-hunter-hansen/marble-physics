@@ -21,6 +21,14 @@ class Skybox extends Mesh {
     public attachTo(scene: THREE.Scene) {
         scene.add(this.mesh);
     }
+    
+    public getPosition(): THREE.Vector3 {
+        return this.mesh.position;
+    }
+    
+    public setPosition(pos: THREE.Vector3): void {
+        this.mesh.position.set(pos.x, pos.y, pos.z);
+    }
 }
 
 export { Skybox }
