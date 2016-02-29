@@ -1,13 +1,11 @@
 import { Camera } from "./Camera";
-import { Ground } from "./Ground";
 import { Lighting } from "./Lighting";
-import { Skybox } from "./Skybox";
 import { TextureLoader, Keyboard } from "../Util/Util";
 import { AssetPaths } from "../Config/AssetPaths";
-import { Marble } from "../World/World";
+import { Marble, Skybox, Ground } from "../World/World";
 
 /**
- * Singleton driver class for the marble game
+ *  driver class for the marble game
  */
 class Engine {
     
@@ -46,9 +44,14 @@ class Engine {
         this.camera.lookAt(this.scene.position);
         Lighting.initCamLight(this.scene);
         
-        Ground.init(this.textures[AssetPaths.Ground.ID], this.scene);
-        new Skybox().attachTo(this.scene);
-        this.scene.add(Marble.createMesh())
+        const ground = new Ground(this.textures[AssetPaths.Ground.ID]);
+        const skybox = new Skybox();
+        
+        ground.attachTo(this.scene);
+        skybox.attachTo(this.scene);
+        
+        // TODO: Make marble like the others =)
+        this.scene.add(Marble.createMesh());
         return this;
     }
     

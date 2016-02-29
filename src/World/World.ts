@@ -1,14 +1,5 @@
 import { Marble } from "./Marble";
+import { Ground } from "./Ground";
+import { Skybox } from "./Skybox";
 
-class World {
-    private scene: THREE.Scene;
-    constructor(scene: THREE.Scene) {
-        this.scene = scene;
-    }
-    
-    public init(): void {
-        this.scene.add(Marble.createMesh());
-    }
-}
-
-export { World, Marble }
+export { Ground, Skybox, Marble }

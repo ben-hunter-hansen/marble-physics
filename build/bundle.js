@@ -46,8 +46,8 @@
 
 	"use strict";
 	var Engine_1 = __webpack_require__(1);
-	var Util_1 = __webpack_require__(10);
-	var Config_1 = __webpack_require__(13);
+	var Util_1 = __webpack_require__(11);
+	var Config_1 = __webpack_require__(14);
 	function main() {
 	    // Create rendering context and attach it to the document
 	    var renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -78,14 +78,12 @@
 	"use strict";
 	var Camera_1 = __webpack_require__(2);
 	exports.Camera = Camera_1.Camera;
-	var Ground_1 = __webpack_require__(3);
-	exports.Ground = Ground_1.Ground;
-	var Lighting_1 = __webpack_require__(4);
+	var Lighting_1 = __webpack_require__(3);
 	exports.Lighting = Lighting_1.Lighting;
-	var Skybox_1 = __webpack_require__(5);
-	exports.Skybox = Skybox_1.Skybox;
-	var AssetPaths_1 = __webpack_require__(7);
-	var World_1 = __webpack_require__(8);
+	var AssetPaths_1 = __webpack_require__(4);
+	var World_1 = __webpack_require__(5);
+	exports.Skybox = World_1.Skybox;
+	exports.Ground = World_1.Ground;
 	/**
 	 * Singleton driver class for the marble game
 	 */
@@ -113,8 +111,11 @@
 	        this.scene.add(this.camera);
 	        this.camera.lookAt(this.scene.position);
 	        Lighting_1.Lighting.initCamLight(this.scene);
-	        Ground_1.Ground.init(this.textures[AssetPaths_1.AssetPaths.Ground.ID], this.scene);
-	        new Skybox_1.Skybox().attachTo(this.scene);
+	        var ground = new World_1.Ground(this.textures[AssetPaths_1.AssetPaths.Ground.ID]);
+	        var skybox = new World_1.Skybox();
+	        ground.attachTo(this.scene);
+	        skybox.attachTo(this.scene);
+	        // TODO: Make marble like the others =)
 	        this.scene.add(World_1.Marble.createMesh());
 	        return this;
 	    };
@@ -157,29 +158,6 @@
 /***/ function(module, exports) {
 
 	"use strict";
-	var Ground = (function () {
-	    function Ground() {
-	    }
-	    Ground.init = function (tex, scene) {
-	        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-	        tex.repeat.set(10, 10);
-	        var floorMaterial = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
-	        var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
-	        var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-	        floor.position.y = -0.5;
-	        floor.rotation.x = Math.PI / 2;
-	        scene.add(floor);
-	    };
-	    return Ground;
-	}());
-	exports.Ground = Ground;
-
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	"use strict";
 	var Lighting = (function () {
 	    function Lighting() {
 	    }
@@ -194,7 +172,51 @@
 
 
 /***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var AssetPaths = {
+	    Ground: { ID: 0, URL: 'assets/grasslight-big.jpg' }
+	};
+	exports.AssetPaths = AssetPaths;
+
+
+/***/ },
 /* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var Marble_1 = __webpack_require__(6);
+	exports.Marble = Marble_1.Marble;
+	var Ground_1 = __webpack_require__(7);
+	exports.Ground = Ground_1.Ground;
+	var Skybox_1 = __webpack_require__(10);
+	exports.Skybox = Skybox_1.Skybox;
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Marble = (function () {
+	    function Marble() {
+	    }
+	    Marble.createMesh = function () {
+	        var geometry = new THREE.SphereGeometry(30, 32, 16);
+	        var material = new THREE.MeshLambertMaterial({ color: 0x000088 });
+	        var mesh = new THREE.Mesh(geometry, material);
+	        mesh.position.set(0, 40, 0);
+	        return mesh;
+	    };
+	    return Marble;
+	}());
+	exports.Marble = Marble;
+
+
+/***/ },
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -203,7 +225,64 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Mesh_1 = __webpack_require__(6);
+	var Types_1 = __webpack_require__(8);
+	var Ground = (function (_super) {
+	    __extends(Ground, _super);
+	    function Ground(texture, config) {
+	        _super.call(this);
+	        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	        texture.repeat.set(10, 10);
+	        this.config = {
+	            material: new THREE.MeshBasicMaterial({
+	                map: texture, side: THREE.DoubleSide
+	            }),
+	            geometry: new THREE.PlaneGeometry(1000, 1000, 10, 10)
+	        };
+	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
+	        this.mesh.position.y = -0.5;
+	        this.mesh.rotation.x = Math.PI / 2;
+	    }
+	    Ground.prototype.attachTo = function (scene) {
+	        scene.add(this.mesh);
+	    };
+	    return Ground;
+	}(Types_1.Mesh));
+	exports.Ground = Ground;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var Mesh_1 = __webpack_require__(9);
+	exports.Mesh = Mesh_1.Mesh;
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Mesh = (function () {
+	    function Mesh() {
+	    }
+	    return Mesh;
+	}());
+	exports.Mesh = Mesh;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Mesh_1 = __webpack_require__(9);
 	var Skybox = (function (_super) {
 	    __extends(Skybox, _super);
 	    function Skybox(config) {
@@ -227,81 +306,18 @@
 
 
 /***/ },
-/* 6 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var Mesh = (function () {
-	    function Mesh() {
-	    }
-	    return Mesh;
-	}());
-	exports.Mesh = Mesh;
-
-
-/***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var AssetPaths = {
-	    Ground: { ID: 0, URL: 'assets/grasslight-big.jpg' }
-	};
-	exports.AssetPaths = AssetPaths;
-
-
-/***/ },
-/* 8 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Marble_1 = __webpack_require__(9);
-	exports.Marble = Marble_1.Marble;
-	var World = (function () {
-	    function World(scene) {
-	        this.scene = scene;
-	    }
-	    World.prototype.init = function () {
-	        this.scene.add(Marble_1.Marble.createMesh());
-	    };
-	    return World;
-	}());
-	exports.World = World;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var Marble = (function () {
-	    function Marble() {
-	    }
-	    Marble.createMesh = function () {
-	        var geometry = new THREE.SphereGeometry(30, 32, 16);
-	        var material = new THREE.MeshLambertMaterial({ color: 0x000088 });
-	        var mesh = new THREE.Mesh(geometry, material);
-	        mesh.position.set(0, 40, 0);
-	        return mesh;
-	    };
-	    return Marble;
-	}());
-	exports.Marble = Marble;
-
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var Keyboard_1 = __webpack_require__(11);
+	var Keyboard_1 = __webpack_require__(12);
 	exports.Keyboard = Keyboard_1.Keyboard;
-	var TextureLoader_1 = __webpack_require__(12);
+	var TextureLoader_1 = __webpack_require__(13);
 	exports.TextureLoader = TextureLoader_1.TextureLoader;
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -342,7 +358,7 @@
 
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -366,18 +382,18 @@
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var AssetPaths_1 = __webpack_require__(7);
+	var AssetPaths_1 = __webpack_require__(4);
 	exports.AssetPaths = AssetPaths_1.AssetPaths;
-	var ViewportDefaults_1 = __webpack_require__(14);
+	var ViewportDefaults_1 = __webpack_require__(15);
 	exports.ViewportDefaults = ViewportDefaults_1.ViewportDefaults;
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	"use strict";
