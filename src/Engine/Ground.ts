@@ -1,7 +1,7 @@
 
 
 export class Ground {
-
+    
     static init(tex: THREE.Texture, scene: THREE.Scene) {
         tex.wrapS = tex.wrapT = THREE.RepeatWrapping; 
         tex.repeat.set( 10, 10 );

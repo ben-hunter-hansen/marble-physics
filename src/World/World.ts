@@ -1,6 +1,6 @@
 import { Marble } from "./Marble";
 
-export class World {
+class World {
     private scene: THREE.Scene;
     constructor(scene: THREE.Scene) {
         this.scene = scene;
@@ -10,3 +10,5 @@ export class World {
         this.scene.add(Marble.createMesh());
     }
 }
+
+export { World, Marble }

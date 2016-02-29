@@ -4,7 +4,7 @@ import { Lighting } from "./Lighting";
 import { Skybox } from "./Skybox";
 import { TextureLoader, Keyboard } from "../Util/Util";
 import { AssetPaths } from "../Config/AssetPaths";
-import { World } from "../World/World";
+import { Marble } from "../World/World";
 
 /**
  * Singleton driver class for the marble game
@@ -15,9 +15,15 @@ class Engine {
     private scene: THREE.Scene;
     private camera: THREE.Camera;
     private keyboard: Keyboard;
+    private textures: THREE.Texture[];
     
     constructor(renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
+    }
+    
+    public setTextures(textures: THREE.Texture[]): Engine {
+        this.textures = textures;
+        return this;
     }
     
     public setCamera(camera: THREE.Camera): Engine {
@@ -39,32 +45,11 @@ class Engine {
         this.scene.add(this.camera);
         this.camera.lookAt(this.scene.position);
         Lighting.initCamLight(this.scene);
+        
+        Ground.init(this.textures[AssetPaths.Ground.ID], this.scene);
+        new Skybox().attachTo(this.scene);
+        this.scene.add(Marble.createMesh())
         return this;
-    }
-    
-    public drawGroud(): Promise<Engine> {
-        return new Promise((resolve, reject) => {
-            const texLoader = new TextureLoader();
-            texLoader.load(AssetPaths.FLOOR_TEXTURE).then((texture) => {
-                Ground.init(texture, this.scene);
-                resolve(this);
-            });
-        });
-    }
-    
-    public drawSkybox(skybox: Skybox): Promise<Engine> {
-        skybox.attachTo(this.scene);
-        
-        // This will be async at some point
-        return Promise.resolve(this);
-    }
-    
-    public createWorld(): Promise<Engine> {
-        const world = new World(this.scene);
-        world.init();
-        
-        // This will be async at some point
-        return Promise.resolve(this);
     }
     
     public render(): void {

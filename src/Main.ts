@@ -1,6 +1,6 @@
 import { Engine, Skybox, Camera } from "./Engine/Engine";
-import { Keyboard } from "./Util/Util";
-import { ViewportDefaults } from "./Config/Config";
+import { Keyboard, TextureLoader } from "./Util/Util";
+import { ViewportDefaults, AssetPaths } from "./Config/Config";
 
 function main(): void {
     
@@ -12,19 +12,23 @@ function main(): void {
     );
     document.body.appendChild( renderer.domElement );
     
+    const loader = new TextureLoader();
+    loader.loadAll([AssetPaths.Ground.URL]).then((textures) => {
+        init(renderer, textures);
+    });
+    
+}
+
+function init(renderer: THREE.WebGLRenderer, textures: THREE.Texture[]): void {
     // Initialize game engine
     const engine = new Engine(renderer)
+        .setTextures(textures)
         .setKeyboard(new Keyboard())
         .setCamera(Camera.create(ViewportDefaults))
         .setScene(new THREE.Scene())
         .initCameraAndScene();
-    
-    // Carry out async initializations,
-    // then begin the game loop
-    engine.drawGroud()
-        .then(engine => engine.drawSkybox(new Skybox()))
-        .then(engine => engine.createWorld())
-        .then(engine => engine.start()); 
+        
+    engine.start();
 }
 
 
