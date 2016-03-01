@@ -1,6 +1,6 @@
-import { Mesh, MeshData } from "../Types/Types";
+import { Mesh, MeshData, IControllable } from "../Types/Types";
 
-export class Marble extends Mesh {
+export class Marble extends Mesh implements IControllable {
     public static INITIAL_POSITION = new THREE.Vector3(0,5,0);
     
     private static DEFAULT_MESH_CONFIG: MeshData = {
@@ -12,23 +12,33 @@ export class Marble extends Mesh {
         super();
         this.config = config ? config : Marble.DEFAULT_MESH_CONFIG;
         this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
-        //this.mesh.position.set(0,5,0); 
-          
     }
     
     public attachTo(scene: THREE.Scene): void {
         scene.add(this.mesh);
     }
     
-    public getPosition(): THREE.Vector3 {
-        return this.mesh.position;
-    }
-    
     public getMesh(): THREE.Mesh {
         return this.mesh;
     }
     
-    public setPosition(pos: THREE.Vector3): void {
-        this.mesh.position.set(pos.x, pos.y, pos.z);
+    public moveForward(distance: number): THREE.Vector3 {
+        this.mesh.translateZ(-Math.abs(distance));
+        return this.mesh.position;
+    }
+    
+    public moveBackward(distance: number): THREE.Vector3 {
+        this.mesh.translateZ(Math.abs(distance));
+        return this.mesh.position;
+    }
+    
+    public turnRight(theta: number): THREE.Vector3 {
+        this.mesh.rotateOnAxis(new THREE.Vector3(0,1,0), -Math.abs(theta));
+        return this.mesh.position;
+    }
+    
+    public turnLeft(theta: number): THREE.Vector3 {
+        this.mesh.rotateOnAxis(new THREE.Vector3(0,1,0), Math.abs(theta));
+        return this.mesh.position;
     }
 }

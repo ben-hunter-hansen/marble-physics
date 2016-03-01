@@ -72,9 +72,19 @@ class Engine {
     
     
     private update(): void {
+        
         if(this.keyboard.isKeyPressed('w')) {
-            this.marble.getMesh().translateZ(-1);
+            this.marble.moveForward(1);
+        } else if(this.keyboard.isKeyPressed('s')) {
+            this.marble.moveBackward(1);
         }
+        
+        if(this.keyboard.isKeyPressed('a')) {
+            this.marble.turnLeft(Math.PI/180);
+        } else if(this.keyboard.isKeyPressed('d')) {
+            this.marble.turnRight(Math.PI/180);
+        }
+        
         this.camera.update();
     }
     

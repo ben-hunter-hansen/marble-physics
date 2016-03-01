@@ -129,7 +129,16 @@
 	    };
 	    Engine.prototype.update = function () {
 	        if (this.keyboard.isKeyPressed('w')) {
-	            this.marble.getMesh().translateZ(-1);
+	            this.marble.moveForward(1);
+	        }
+	        else if (this.keyboard.isKeyPressed('s')) {
+	            this.marble.moveBackward(1);
+	        }
+	        if (this.keyboard.isKeyPressed('a')) {
+	            this.marble.turnLeft(Math.PI / 180);
+	        }
+	        else if (this.keyboard.isKeyPressed('d')) {
+	            this.marble.turnRight(Math.PI / 180);
 	        }
 	        this.camera.update();
 	    };
@@ -330,19 +339,28 @@
 	        _super.call(this);
 	        this.config = config ? config : Marble.DEFAULT_MESH_CONFIG;
 	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
-	        //this.mesh.position.set(0,5,0); 
 	    }
 	    Marble.prototype.attachTo = function (scene) {
 	        scene.add(this.mesh);
 	    };
-	    Marble.prototype.getPosition = function () {
-	        return this.mesh.position;
-	    };
 	    Marble.prototype.getMesh = function () {
 	        return this.mesh;
 	    };
-	    Marble.prototype.setPosition = function (pos) {
-	        this.mesh.position.set(pos.x, pos.y, pos.z);
+	    Marble.prototype.moveForward = function (distance) {
+	        this.mesh.translateZ(-Math.abs(distance));
+	        return this.mesh.position;
+	    };
+	    Marble.prototype.moveBackward = function (distance) {
+	        this.mesh.translateZ(Math.abs(distance));
+	        return this.mesh.position;
+	    };
+	    Marble.prototype.turnRight = function (theta) {
+	        this.mesh.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.abs(theta));
+	        return this.mesh.position;
+	    };
+	    Marble.prototype.turnLeft = function (theta) {
+	        this.mesh.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.abs(theta));
+	        return this.mesh.position;
 	    };
 	    Marble.INITIAL_POSITION = new THREE.Vector3(0, 5, 0);
 	    Marble.DEFAULT_MESH_CONFIG = {
@@ -406,12 +424,6 @@
 	    Ground.prototype.attachTo = function (scene) {
 	        scene.add(this.mesh);
 	    };
-	    Ground.prototype.getPosition = function () {
-	        return this.mesh.position;
-	    };
-	    Ground.prototype.setPosition = function (pos) {
-	        this.mesh.position.set(pos.x, pos.y, pos.z);
-	    };
 	    return Ground;
 	}(Types_1.Mesh));
 	exports.Ground = Ground;
@@ -427,7 +439,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Mesh_1 = __webpack_require__(8);
+	var Types_1 = __webpack_require__(7);
 	var Skybox = (function (_super) {
 	    __extends(Skybox, _super);
 	    function Skybox(config) {
@@ -438,12 +450,6 @@
 	    Skybox.prototype.attachTo = function (scene) {
 	        scene.add(this.mesh);
 	    };
-	    Skybox.prototype.getPosition = function () {
-	        return this.mesh.position;
-	    };
-	    Skybox.prototype.setPosition = function (pos) {
-	        this.mesh.position.set(pos.x, pos.y, pos.z);
-	    };
 	    Skybox.DEFAULT_MESH_CONFIG = {
 	        material: new THREE.MeshBasicMaterial({
 	            color: 0x9999ff,
@@ -452,7 +458,7 @@
 	        geometry: new THREE.CubeGeometry(1000, 1000, 1000)
 	    };
 	    return Skybox;
-	}(Mesh_1.Mesh));
+	}(Types_1.Mesh));
 	exports.Skybox = Skybox;
 
 
