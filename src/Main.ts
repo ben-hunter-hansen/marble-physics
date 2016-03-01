@@ -24,7 +24,7 @@ function init(renderer: THREE.WebGLRenderer, textures: THREE.Texture[]): void {
     const engine = new Engine(renderer)
         .setTextures(textures)
         .setKeyboard(new Keyboard())
-        .setCamera(Camera.create(ViewportDefaults))
+        .setCamera(new Camera(ViewportDefaults))
         .setScene(new THREE.Scene())
         .initCameraAndScene();
         

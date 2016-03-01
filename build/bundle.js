@@ -63,7 +63,7 @@
 	    var engine = new Engine_1.Engine(renderer)
 	        .setTextures(textures)
 	        .setKeyboard(new Util_1.Keyboard())
-	        .setCamera(Engine_1.Camera.create(Config_1.ViewportDefaults))
+	        .setCamera(new Engine_1.Camera(Config_1.ViewportDefaults))
 	        .setScene(new THREE.Scene())
 	        .initCameraAndScene();
 	    engine.start();
@@ -109,15 +109,29 @@
 	    };
 	    Engine.prototype.initCameraAndScene = function () {
 	        this.scene.add(this.camera);
-	        this.camera.lookAt(this.scene.position);
 	        Lighting_1.Lighting.initCamLight(this.scene);
-	        var ground = new World_1.Ground(this.textures[AssetPaths_1.AssetPaths.Ground.ID]);
-	        var skybox = new World_1.Skybox();
-	        var marble = new World_1.Marble();
-	        ground.attachTo(this.scene);
-	        skybox.attachTo(this.scene);
-	        marble.attachTo(this.scene);
+	        this.ground = new World_1.Ground(this.textures[AssetPaths_1.AssetPaths.Ground.ID]);
+	        this.skybox = new World_1.Skybox();
+	        this.marble = new World_1.Marble();
+	        this.ground.attachTo(this.scene);
+	        this.skybox.attachTo(this.scene);
+	        this.marble.attachTo(this.scene);
+	        this.camera.addTarget({
+	            name: 'marble',
+	            targetObject: this.marble.getMesh(),
+	            cameraPosition: new THREE.Vector3(0, 8, 30),
+	            fixed: false,
+	            stiffness: 0.1,
+	            matchRotation: true
+	        });
+	        this.camera.setTarget('marble');
 	        return this;
+	    };
+	    Engine.prototype.update = function () {
+	        if (this.keyboard.isKeyPressed('w')) {
+	            this.marble.getMesh().translateZ(-1);
+	        }
+	        this.camera.update();
 	    };
 	    Engine.prototype.render = function () {
 	        this.renderer.render(this.scene, this.camera);
@@ -126,6 +140,7 @@
 	        var _this = this;
 	        requestAnimationFrame(function () { return _this.animate(); });
 	        this.render();
+	        this.update();
 	    };
 	    Engine.prototype.start = function () {
 	        this.animate();
@@ -139,17 +154,120 @@
 /* 2 */
 /***/ function(module, exports) {
 
+	/**
+	 * TypeScript implementation for this:
+	 * https://github.com/squarefeet/THREE.TargetCamera
+	 */
 	"use strict";
-	var Camera = (function () {
-	    function Camera() {
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Camera = (function (_super) {
+	    __extends(Camera, _super);
+	    function Camera(config) {
+	        _super.call(this, config.FOV, config.ASPECT_RATIO, config.NEAR, config.FAR);
+	        this.targets = {};
+	        this.targetOrder = [];
+	        this.currentTargetName = null;
+	        this.idealObject = new THREE.Object3D();
+	        this.isTransitioning = false;
+	        this.defaults = {
+	            name: null,
+	            targetObject: new THREE.Object3D(),
+	            cameraPosition: new THREE.Vector3(0, 30, 50),
+	            cameraRotation: undefined,
+	            fixed: false,
+	            stiffness: 0.4,
+	            matchRotation: true
+	        };
+	        this.updateProjectionMatrix();
 	    }
-	    Camera.create = function (config) {
-	        var cam = new THREE.PerspectiveCamera(config.FOV, config.ASPECT_RATIO, config.NEAR, config.FAR);
-	        cam.position.set(0, 150, 400);
-	        return cam;
+	    Camera.prototype.translateIdealObject = function (vec) {
+	        var obj = this.idealObject;
+	        if (vec.x !== 0)
+	            obj.translateX(vec.x);
+	        if (vec.y !== 0)
+	            obj.translateY(vec.y);
+	        if (vec.z !== 0)
+	            obj.translateZ(vec.z);
+	    };
+	    Camera.prototype.createNewTarget = function () {
+	        var defaults = this.defaults;
+	        return {
+	            name: defaults.name,
+	            targetObject: defaults.targetObject,
+	            cameraPosition: defaults.cameraPosition,
+	            cameraRotation: defaults.cameraRotation,
+	            fixed: defaults.fixed,
+	            stiffness: defaults.stiffness,
+	            matchRotation: defaults.matchRotation
+	        };
+	    };
+	    Camera.prototype.determineCameraRotation = function (rotation) {
+	        var ret = null;
+	        if (rotation instanceof THREE.Euler)
+	            ret = new THREE.Quaternion().setFromEuler(rotation);
+	        else
+	            ret = rotation;
+	        return ret;
+	    };
+	    Camera.prototype.addTarget = function (settings) {
+	        var target = this.createNewTarget();
+	        for (var prop in settings) {
+	            if (target.hasOwnProperty(prop)) {
+	                if (prop === 'cameraRotation')
+	                    target[prop] = this.determineCameraRotation(settings[prop]);
+	                else
+	                    target[prop] = settings[prop];
+	            }
+	        }
+	        this.targets[settings.name] = target;
+	        this.targetOrder.push(settings.name);
+	    };
+	    Camera.prototype.setTarget = function (name) {
+	        if (this.targets.hasOwnProperty(name))
+	            this.currentTargetName = name;
+	        else
+	            console.warn("Camera.setTarget: No target with name: " + name);
+	    };
+	    Camera.prototype.removeTarget = function (name) {
+	        var targets = this.targets;
+	        var targetOrder = this.targetOrder;
+	        if (targetOrder.length === 1) {
+	            console.warn('Camera: Will not remove only existing camera target.');
+	        }
+	        else if (targets.hasOwnProperty(name)) {
+	            targetOrder.splice(targetOrder.indexOf(name), 1);
+	            targets[name] = null;
+	        }
+	        this.setTarget(targetOrder[targetOrder.length - 1]);
+	    };
+	    Camera.prototype.update = function () {
+	        var target = this.targets[this.currentTargetName];
+	        var ideal = this.idealObject;
+	        if (!target)
+	            return;
+	        if (!target.fixed) {
+	            ideal.position.copy(target.targetObject.position);
+	            ideal.quaternion.copy(target.targetObject.quaternion);
+	            if (target.cameraRotation !== undefined)
+	                ideal.quaternion.multiply(target.cameraRotation);
+	            this.translateIdealObject(target.cameraPosition);
+	            this.position.lerp(ideal.position, target.stiffness);
+	            if (target.matchRotation)
+	                this.quaternion.slerp(ideal.quaternion, target.stiffness);
+	            else
+	                this.lookAt(target.targetObject.position);
+	        }
+	        else {
+	            this.position.copy(target.cameraPosition);
+	            this.lookAt(target.targetObject.position);
+	        }
 	    };
 	    return Camera;
-	}());
+	}(THREE.PerspectiveCamera));
 	exports.Camera = Camera;
 
 
@@ -212,7 +330,7 @@
 	        _super.call(this);
 	        this.config = config ? config : Marble.DEFAULT_MESH_CONFIG;
 	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
-	        this.mesh.position.set(0, 40, 0);
+	        //this.mesh.position.set(0,5,0); 
 	    }
 	    Marble.prototype.attachTo = function (scene) {
 	        scene.add(this.mesh);
@@ -220,12 +338,16 @@
 	    Marble.prototype.getPosition = function () {
 	        return this.mesh.position;
 	    };
+	    Marble.prototype.getMesh = function () {
+	        return this.mesh;
+	    };
 	    Marble.prototype.setPosition = function (pos) {
 	        this.mesh.position.set(pos.x, pos.y, pos.z);
 	    };
+	    Marble.INITIAL_POSITION = new THREE.Vector3(0, 5, 0);
 	    Marble.DEFAULT_MESH_CONFIG = {
 	        material: new THREE.MeshLambertMaterial({ color: 0x000088 }),
-	        geometry: new THREE.SphereGeometry(30, 32, 16)
+	        geometry: new THREE.SphereGeometry(5, 8, 16)
 	    };
 	    return Marble;
 	}(Types_1.Mesh));
@@ -357,7 +479,7 @@
 	            87: { ascii: "w", pressed: false },
 	            65: { ascii: "a", pressed: false },
 	            83: { ascii: "s", pressed: false },
-	            67: { ascii: "d", pressed: false }
+	            68: { ascii: "d", pressed: false }
 	        };
 	        this.element = element || document;
 	        this.element.addEventListener("keydown", function (e) {
@@ -379,7 +501,7 @@
 	        "w": 87,
 	        "a": 65,
 	        "s": 83,
-	        "d": 67
+	        "d": 68
 	    };
 	    return Keyboard;
 	}());

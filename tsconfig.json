@@ -8,6 +8,7 @@
   "files": [
     "src/Util/Keyboard.ts",
     "src/Util/TextureLoader.ts",
+    "src/Util/MathUtil.ts",
     "src/Util/Util.ts",
     "src/Types/IAssetLoader.ts",
     "src/Types/MeshData.ts",

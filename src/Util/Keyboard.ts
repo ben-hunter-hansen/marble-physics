@@ -6,14 +6,14 @@ export class Keyboard {
         87: {ascii: "w", pressed: false},
         65: {ascii: "a", pressed: false},
         83: {ascii: "s", pressed: false},
-        67: {ascii: "d", pressed: false}
+        68: {ascii: "d", pressed: false}
     };
     
     public static KEYS = {
         "w": 87,
         "a": 65,
         "s": 83,
-        "d": 67
+        "d": 68
     }
     
     constructor(element?: HTMLElement) {
