@@ -304,7 +304,7 @@
 
 	"use strict";
 	var AssetPaths = {
-	    Ground: { ID: 0, URL: 'assets/grasslight-big.jpg' }
+	    Ground: { ID: 0, URL: 'assets/scratch-metal-texture.jpg' }
 	};
 	exports.AssetPaths = AssetPaths;
 
@@ -339,10 +339,8 @@
 	        _super.call(this);
 	        this.config = config ? config : Marble.DEFAULT_MESH_CONFIG;
 	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
+	        this.mesh.position.set(0, 5, 0);
 	    }
-	    Marble.prototype.attachTo = function (scene) {
-	        scene.add(this.mesh);
-	    };
 	    Marble.prototype.getMesh = function () {
 	        return this.mesh;
 	    };
@@ -365,7 +363,7 @@
 	    Marble.INITIAL_POSITION = new THREE.Vector3(0, 5, 0);
 	    Marble.DEFAULT_MESH_CONFIG = {
 	        material: new THREE.MeshLambertMaterial({ color: 0x000088 }),
-	        geometry: new THREE.SphereGeometry(5, 8, 16)
+	        geometry: new THREE.SphereGeometry(3, 12, 16)
 	    };
 	    return Marble;
 	}(Types_1.Mesh));
@@ -389,6 +387,39 @@
 	var Mesh = (function () {
 	    function Mesh() {
 	    }
+	    Mesh.prototype.attachTo = function (scene) {
+	        scene.add(this.mesh);
+	    };
+	    Mesh.prototype.getMesh = function () {
+	        return this.mesh;
+	    };
+	    Mesh.prototype.getPosition = function () {
+	        return this.mesh.position;
+	    };
+	    Mesh.prototype.getMatrix = function () {
+	        return this.mesh.matrix;
+	    };
+	    Mesh.prototype.getVertexCount = function () {
+	        return this.config.geometry.vertices.length;
+	    };
+	    Mesh.prototype.getVertex = function (index) {
+	        return this.config.geometry.vertices[index].clone();
+	    };
+	    Mesh.prototype.collidesWith = function (object) {
+	        var origin = this.getPosition().clone();
+	        var collision = false;
+	        for (var i = 0; i < this.getVertexCount() && !collision; i++) {
+	            var localVertex = this.getVertex(i);
+	            var globalVertex = localVertex.applyMatrix4(this.getMatrix());
+	            var directionVector = globalVertex.sub(this.getPosition());
+	            var ray = new THREE.Raycaster(origin, directionVector.clone().normalize());
+	            var collisionResult = ray.intersectObject(object);
+	            if (collisionResult.length && collisionResult[0].distance < directionVector.length()) {
+	                collision = true;
+	            }
+	        }
+	        return collision;
+	    };
 	    return Mesh;
 	}());
 	exports.Mesh = Mesh;
@@ -415,15 +446,12 @@
 	            material: new THREE.MeshBasicMaterial({
 	                map: texture, side: THREE.DoubleSide
 	            }),
-	            geometry: new THREE.PlaneGeometry(1000, 1000, 10, 10)
+	            geometry: new THREE.PlaneGeometry(500, 500, 10, 10)
 	        };
 	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
 	        this.mesh.position.y = -0.5;
 	        this.mesh.rotation.x = Math.PI / 2;
 	    }
-	    Ground.prototype.attachTo = function (scene) {
-	        scene.add(this.mesh);
-	    };
 	    return Ground;
 	}(Types_1.Mesh));
 	exports.Ground = Ground;
@@ -447,15 +475,12 @@
 	        this.config = config ? config : Skybox.DEFAULT_MESH_CONFIG;
 	        this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
 	    }
-	    Skybox.prototype.attachTo = function (scene) {
-	        scene.add(this.mesh);
-	    };
 	    Skybox.DEFAULT_MESH_CONFIG = {
 	        material: new THREE.MeshBasicMaterial({
 	            color: 0x9999ff,
 	            side: THREE.BackSide
 	        }),
-	        geometry: new THREE.CubeGeometry(1000, 1000, 1000)
+	        geometry: new THREE.CubeGeometry(500, 500, 500)
 	    };
 	    return Skybox;
 	}(Types_1.Mesh));

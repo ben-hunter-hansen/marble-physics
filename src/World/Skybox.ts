@@ -7,7 +7,7 @@ class Skybox extends Mesh {
             color: 0x9999ff, 
             side: THREE.BackSide
         }),
-        geometry: new THREE.CubeGeometry(1000, 1000, 1000)
+        geometry: new THREE.CubeGeometry(500, 500, 500)
     };
     
     constructor(config?: MeshData) {
@@ -15,10 +15,6 @@ class Skybox extends Mesh {
         
         this.config = config ? config : Skybox.DEFAULT_MESH_CONFIG;
         this.mesh = new THREE.Mesh(this.config.geometry, this.config.material);
-    }
-    
-    public attachTo(scene: THREE.Scene) {
-        scene.add(this.mesh);
     }
 }
 

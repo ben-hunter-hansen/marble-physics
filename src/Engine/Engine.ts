@@ -15,10 +15,10 @@ class Engine {
     private keyboard: Keyboard;
     private textures: THREE.Texture[];
     
-    // TODO make these part of World
     private ground: Ground;
     private marble: Marble;
     private skybox: Skybox;
+    
     
     constructor(renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
@@ -84,6 +84,7 @@ class Engine {
         } else if(this.keyboard.isKeyPressed('d')) {
             this.marble.turnRight(Math.PI/180);
         }
+        
         
         this.camera.update();
     }
