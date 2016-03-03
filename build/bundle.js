@@ -46,8 +46,8 @@
 
 	"use strict";
 	var Engine_1 = __webpack_require__(1);
-	var Util_1 = __webpack_require__(4);
-	var Config_1 = __webpack_require__(15);
+	var Util_1 = __webpack_require__(5);
+	var Config_1 = __webpack_require__(16);
 	function main() {
 	    // Create rendering context and attach it to the document
 	    var renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -79,12 +79,12 @@
 	"use strict";
 	var Camera_1 = __webpack_require__(2);
 	exports.Camera = Camera_1.Camera;
-	var Physics_1 = __webpack_require__(17);
-	var Lighting_1 = __webpack_require__(3);
+	var Physics_1 = __webpack_require__(3);
+	var Lighting_1 = __webpack_require__(4);
 	exports.Lighting = Lighting_1.Lighting;
-	var Util_1 = __webpack_require__(4);
-	var AssetPaths_1 = __webpack_require__(8);
-	var World_1 = __webpack_require__(9);
+	var Util_1 = __webpack_require__(5);
+	var AssetPaths_1 = __webpack_require__(9);
+	var World_1 = __webpack_require__(10);
 	exports.Skybox = World_1.Skybox;
 	exports.Ground = World_1.Ground;
 	/**
@@ -136,6 +136,7 @@
 	            _this.scene.add(mesh);
 	            _this.physics.setCollidables([mesh]);
 	        });
+	        this.physics.setGroundY(this.ground.getPosition().y);
 	        this.physics.startClock();
 	        return this;
 	    };
@@ -302,6 +303,63 @@
 /***/ function(module, exports) {
 
 	"use strict";
+	var Physics = (function () {
+	    function Physics(clock) {
+	        this.clock = clock;
+	        this.trackedMeshes = [];
+	        this.collidables = [];
+	    }
+	    Physics.prototype.startClock = function (delay) {
+	        delay ? setTimeout(this.clock.start, delay) : this.clock.start();
+	    };
+	    Physics.prototype.setGroundY = function (coordinate) {
+	        this.groundY = coordinate;
+	    };
+	    Physics.prototype.setCollidables = function (meshes) {
+	        this.collidables = meshes;
+	    };
+	    Physics.prototype.track = function (mesh) {
+	        this.trackedMeshes.push(mesh);
+	    };
+	    Physics.prototype.update = function () {
+	        var dt = this.clock.getDelta(); // use this eventually
+	        // WARNING: bad code!
+	        for (var _i = 0, _a = this.trackedMeshes; _i < _a.length; _i++) {
+	            var trackedMesh = _a[_i];
+	            for (var _b = 0, _c = this.collidables; _b < _c.length; _b++) {
+	                var collidable = _c[_b];
+	                var intersection = trackedMesh.collidesWith(collidable);
+	                if (intersection)
+	                    this.handleCollision(trackedMesh, intersection);
+	                else
+	                    this.applyGravity(trackedMesh);
+	            }
+	        }
+	    };
+	    Physics.prototype.applyGravity = function (mesh) {
+	        var offsetHeight;
+	        var geometry = mesh.getMesh().geometry;
+	        if (geometry instanceof THREE.SphereGeometry) {
+	            offsetHeight = geometry.boundingSphere.radius;
+	        }
+	        if (mesh.getPosition().y > this.groundY + offsetHeight) {
+	            mesh.getMesh().translateY(-0.5);
+	        }
+	    };
+	    Physics.prototype.handleCollision = function (subjectMesh, intersect) {
+	        var normal = intersect.face.normal.clone();
+	        subjectMesh.getMesh().translateY(normal.y);
+	    };
+	    return Physics;
+	}());
+	exports.Physics = Physics;
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
 	var Lighting = (function () {
 	    function Lighting() {
 	    }
@@ -316,20 +374,20 @@
 
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Keyboard_1 = __webpack_require__(5);
+	var Keyboard_1 = __webpack_require__(6);
 	exports.Keyboard = Keyboard_1.Keyboard;
-	var TextureLoader_1 = __webpack_require__(6);
+	var TextureLoader_1 = __webpack_require__(7);
 	exports.TextureLoader = TextureLoader_1.TextureLoader;
-	var MeshLoader_1 = __webpack_require__(7);
+	var MeshLoader_1 = __webpack_require__(8);
 	exports.MeshLoader = MeshLoader_1.MeshLoader;
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -370,7 +428,7 @@
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -394,7 +452,7 @@
 
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -422,7 +480,7 @@
 
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -438,20 +496,20 @@
 
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Marble_1 = __webpack_require__(10);
+	var Marble_1 = __webpack_require__(11);
 	exports.Marble = Marble_1.Marble;
-	var Ground_1 = __webpack_require__(13);
+	var Ground_1 = __webpack_require__(14);
 	exports.Ground = Ground_1.Ground;
-	var Skybox_1 = __webpack_require__(14);
+	var Skybox_1 = __webpack_require__(15);
 	exports.Skybox = Skybox_1.Skybox;
 
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -460,7 +518,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Types_1 = __webpack_require__(11);
+	var Types_1 = __webpack_require__(12);
 	var Marble = (function (_super) {
 	    __extends(Marble, _super);
 	    function Marble(config) {
@@ -499,16 +557,16 @@
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Mesh_1 = __webpack_require__(12);
+	var Mesh_1 = __webpack_require__(13);
 	exports.Mesh = Mesh_1.Mesh;
 
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -535,18 +593,18 @@
 	    };
 	    Mesh.prototype.collidesWith = function (object) {
 	        var origin = this.getPosition().clone();
-	        var collision = false;
-	        for (var i = 0; i < this.getVertexCount() && !collision; i++) {
+	        var result;
+	        for (var i = 0; i < this.getVertexCount() && !result; i++) {
 	            var localVertex = this.getVertex(i);
 	            var globalVertex = localVertex.applyMatrix4(this.getMatrix());
 	            var directionVector = globalVertex.sub(this.getPosition());
 	            var ray = new THREE.Raycaster(origin, directionVector.clone().normalize());
 	            var collisionResult = ray.intersectObject(object);
 	            if (collisionResult.length && collisionResult[0].distance < directionVector.length()) {
-	                collision = true;
+	                result = collisionResult[0];
 	            }
 	        }
-	        return collision;
+	        return result;
 	    };
 	    return Mesh;
 	}());
@@ -554,7 +612,7 @@
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -563,7 +621,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Types_1 = __webpack_require__(11);
+	var Types_1 = __webpack_require__(12);
 	var Ground = (function (_super) {
 	    __extends(Ground, _super);
 	    function Ground(texture, config) {
@@ -586,7 +644,7 @@
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -595,7 +653,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Types_1 = __webpack_require__(11);
+	var Types_1 = __webpack_require__(12);
 	var Skybox = (function (_super) {
 	    __extends(Skybox, _super);
 	    function Skybox(config) {
@@ -616,18 +674,18 @@
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var AssetPaths_1 = __webpack_require__(8);
+	var AssetPaths_1 = __webpack_require__(9);
 	exports.AssetPaths = AssetPaths_1.AssetPaths;
-	var ViewportDefaults_1 = __webpack_require__(16);
+	var ViewportDefaults_1 = __webpack_require__(17);
 	exports.ViewportDefaults = ViewportDefaults_1.ViewportDefaults;
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -637,47 +695,9 @@
 	    FOV: 45,
 	    ASPECT_RATIO: window.innerWidth / window.innerHeight,
 	    NEAR: 0.1,
-	    FAR: 1000
+	    FAR: 500
 	};
 	exports.ViewportDefaults = ViewportDefaults;
-
-
-/***/ },
-/* 17 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var Physics = (function () {
-	    function Physics(clock) {
-	        this.clock = clock;
-	        this.trackedMeshes = [];
-	        this.collidables = [];
-	    }
-	    Physics.prototype.startClock = function (delay) {
-	        delay ? setTimeout(this.clock.start, delay) : this.clock.start();
-	    };
-	    Physics.prototype.setCollidables = function (meshes) {
-	        this.collidables = meshes;
-	    };
-	    Physics.prototype.track = function (mesh) {
-	        this.trackedMeshes.push(mesh);
-	    };
-	    Physics.prototype.update = function () {
-	        var dt = this.clock.getDelta(); // use this eventually
-	        // WARNING: bad code!
-	        for (var _i = 0, _a = this.trackedMeshes; _i < _a.length; _i++) {
-	            var trackedMesh = _a[_i];
-	            for (var _b = 0, _c = this.collidables; _b < _c.length; _b++) {
-	                var collidable = _c[_b];
-	                if (trackedMesh.collidesWith(collidable)) {
-	                    console.log("A collision occured!");
-	                }
-	            }
-	        }
-	    };
-	    return Physics;
-	}());
-	exports.Physics = Physics;
 
 
 /***/ }

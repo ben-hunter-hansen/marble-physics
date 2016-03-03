@@ -6,7 +6,7 @@ const ViewportDefaults: Viewport = {
     FOV: 45,
     ASPECT_RATIO: window.innerWidth / window.innerHeight,
     NEAR: 0.1,
-    FAR: 1000
+    FAR: 500
 }
 
 export { ViewportDefaults };

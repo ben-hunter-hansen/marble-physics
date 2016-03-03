@@ -1,4 +1,5 @@
 import { MeshData } from "./MeshData";
+import { Intersection } from "./Intersection";
 
 abstract class Mesh {
     protected mesh: THREE.Mesh;
@@ -28,11 +29,12 @@ abstract class Mesh {
         return this.config.geometry.vertices[index].clone();
     }
     
-    public collidesWith(object: THREE.Mesh): boolean {
+    public collidesWith(object: THREE.Mesh): Intersection {
         
         let origin = this.getPosition().clone();
-        let collision = false;
-        for(let i = 0; i < this.getVertexCount() && !collision; i++) {
+        let result: Intersection;
+        
+        for(let i = 0; i < this.getVertexCount() && !result; i++) {
             let localVertex = this.getVertex(i);
             let globalVertex = localVertex.applyMatrix4(this.getMatrix());
             let directionVector = globalVertex.sub(this.getPosition());
@@ -40,11 +42,11 @@ abstract class Mesh {
             let ray = new THREE.Raycaster(origin, directionVector.clone().normalize());
             let collisionResult = ray.intersectObject(object);
             if(collisionResult.length && collisionResult[0].distance < directionVector.length()) {
-                collision = true;
+                result = collisionResult[0];
             }
         }
         
-        return collision;
+        return result;
     }
 }
 

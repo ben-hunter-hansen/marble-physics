@@ -17,6 +17,7 @@
     "src/Types/Mesh.ts",
     "src/Types/Viewport.ts",
     "src/Types/Types.ts",
+    "src/Types/Intersection.ts",
     "src/Config/Config.ts",
     "src/Config/ViewportDefaults.ts",
     "src/Config/AssetPaths.ts",

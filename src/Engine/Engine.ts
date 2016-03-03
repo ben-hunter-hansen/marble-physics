@@ -77,7 +77,7 @@ class Engine {
             this.scene.add(mesh);
             this.physics.setCollidables([mesh]);
         });
-        
+        this.physics.setGroundY(this.ground.getPosition().y);
         this.physics.startClock();
         return this;
     }
