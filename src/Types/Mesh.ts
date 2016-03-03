@@ -1,5 +1,4 @@
 import { MeshData } from "./MeshData";
-import { CollisionResult } from "./CollisionResult";
 
 abstract class Mesh {
     protected mesh: THREE.Mesh;

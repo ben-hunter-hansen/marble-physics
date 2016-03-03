@@ -1,7 +1,6 @@
 import { Mesh } from "./Mesh";
 import { MeshData } from "./MeshData";
 import { Viewport } from "./Viewport";
-import { CollisionResult } from "./CollisionResult";
 import { IAssetLoader } from "./IAssetLoader";
 import { IControllable } from "./IControllable";
 
@@ -10,6 +9,5 @@ export {
     MeshData, 
     Viewport, 
     IAssetLoader, 
-    IControllable, 
-    CollisionResult 
+    IControllable
 }

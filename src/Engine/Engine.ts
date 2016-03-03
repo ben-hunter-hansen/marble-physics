@@ -1,6 +1,7 @@
 import { Camera } from "./Camera";
+import { Physics } from "./Physics";
 import { Lighting } from "./Lighting";
-import { TextureLoader, Keyboard } from "../Util/Util";
+import { MeshLoader, Keyboard } from "../Util/Util";
 import { AssetPaths } from "../Config/AssetPaths";
 import { Marble, Skybox, Ground } from "../World/World";
 
@@ -14,7 +15,7 @@ class Engine {
     private camera: Camera;
     private keyboard: Keyboard;
     private textures: THREE.Texture[];
-    
+    private physics: Physics;
     private ground: Ground;
     private marble: Marble;
     private skybox: Skybox;
@@ -39,16 +40,17 @@ class Engine {
         return this;
     }
     
-    public setKeyboard(keyboard: Keyboard) {
+    public setKeyboard(keyboard: Keyboard): Engine {
         this.keyboard = keyboard;
         return this;
     }
+    
     
     public initCameraAndScene(): Engine {
         this.scene.add(this.camera);
         Lighting.initCamLight(this.scene);
         
-        this.ground = new Ground(this.textures[AssetPaths.Ground.ID]);
+        this.ground = new Ground(this.textures[AssetPaths.Textures.Ground.ID]);
         this.skybox = new Skybox();
         this.marble = new Marble();
         
@@ -65,8 +67,23 @@ class Engine {
             matchRotation: true
         });
         
-        this.camera.setTarget('marble');
         
+        this.camera.setTarget('marble');
+        this.physics.track(this.marble);
+        
+        // Add test mesh
+        const loader = new MeshLoader();
+        loader.load(AssetPaths.Models.Ramp).then((mesh) => {
+            this.scene.add(mesh);
+            this.physics.setCollidables([mesh]);
+        });
+        
+        this.physics.startClock();
+        return this;
+    }
+    
+    public initPhysics(): Engine {
+        this.physics = new Physics(new THREE.Clock());
         return this;
     }
     
@@ -87,6 +104,7 @@ class Engine {
         
         
         this.camera.update();
+        this.physics.update();
     }
     
     public render(): void {
@@ -95,6 +113,7 @@ class Engine {
     
     private animate(): void {
         requestAnimationFrame(() => this.animate());
+        
         this.render();
         this.update();
     }

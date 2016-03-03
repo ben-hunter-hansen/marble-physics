@@ -1,5 +1,5 @@
 import { Engine, Skybox, Camera } from "./Engine/Engine";
-import { Keyboard, TextureLoader } from "./Util/Util";
+import { Keyboard, TextureLoader, MeshLoader } from "./Util/Util";
 import { ViewportDefaults, AssetPaths } from "./Config/Config";
 
 function main(): void {
@@ -13,7 +13,7 @@ function main(): void {
     document.body.appendChild( renderer.domElement );
     
     const loader = new TextureLoader();
-    loader.loadAll([AssetPaths.Ground.URL]).then((textures) => {
+    loader.loadAll([AssetPaths.Textures.Ground.URL]).then((textures) => {
         init(renderer, textures);
     });
     
@@ -26,7 +26,8 @@ function init(renderer: THREE.WebGLRenderer, textures: THREE.Texture[]): void {
         .setKeyboard(new Keyboard())
         .setCamera(new Camera(ViewportDefaults))
         .setScene(new THREE.Scene())
-        .initCameraAndScene();
+        .initPhysics()
+        .initCameraAndScene()
         
     engine.start();
 }

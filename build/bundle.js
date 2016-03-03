@@ -46,15 +46,15 @@
 
 	"use strict";
 	var Engine_1 = __webpack_require__(1);
-	var Util_1 = __webpack_require__(11);
-	var Config_1 = __webpack_require__(14);
+	var Util_1 = __webpack_require__(4);
+	var Config_1 = __webpack_require__(15);
 	function main() {
 	    // Create rendering context and attach it to the document
 	    var renderer = new THREE.WebGLRenderer({ antialias: true });
 	    renderer.setSize(Config_1.ViewportDefaults.SCREEN_WIDTH, Config_1.ViewportDefaults.SCREEN_HEIGHT);
 	    document.body.appendChild(renderer.domElement);
 	    var loader = new Util_1.TextureLoader();
-	    loader.loadAll([Config_1.AssetPaths.Ground.URL]).then(function (textures) {
+	    loader.loadAll([Config_1.AssetPaths.Textures.Ground.URL]).then(function (textures) {
 	        init(renderer, textures);
 	    });
 	}
@@ -65,6 +65,7 @@
 	        .setKeyboard(new Util_1.Keyboard())
 	        .setCamera(new Engine_1.Camera(Config_1.ViewportDefaults))
 	        .setScene(new THREE.Scene())
+	        .initPhysics()
 	        .initCameraAndScene();
 	    engine.start();
 	}
@@ -78,10 +79,12 @@
 	"use strict";
 	var Camera_1 = __webpack_require__(2);
 	exports.Camera = Camera_1.Camera;
+	var Physics_1 = __webpack_require__(17);
 	var Lighting_1 = __webpack_require__(3);
 	exports.Lighting = Lighting_1.Lighting;
-	var AssetPaths_1 = __webpack_require__(4);
-	var World_1 = __webpack_require__(5);
+	var Util_1 = __webpack_require__(4);
+	var AssetPaths_1 = __webpack_require__(8);
+	var World_1 = __webpack_require__(9);
 	exports.Skybox = World_1.Skybox;
 	exports.Ground = World_1.Ground;
 	/**
@@ -108,9 +111,10 @@
 	        return this;
 	    };
 	    Engine.prototype.initCameraAndScene = function () {
+	        var _this = this;
 	        this.scene.add(this.camera);
 	        Lighting_1.Lighting.initCamLight(this.scene);
-	        this.ground = new World_1.Ground(this.textures[AssetPaths_1.AssetPaths.Ground.ID]);
+	        this.ground = new World_1.Ground(this.textures[AssetPaths_1.AssetPaths.Textures.Ground.ID]);
 	        this.skybox = new World_1.Skybox();
 	        this.marble = new World_1.Marble();
 	        this.ground.attachTo(this.scene);
@@ -125,6 +129,18 @@
 	            matchRotation: true
 	        });
 	        this.camera.setTarget('marble');
+	        this.physics.track(this.marble);
+	        // Add test mesh
+	        var loader = new Util_1.MeshLoader();
+	        loader.load(AssetPaths_1.AssetPaths.Models.Ramp).then(function (mesh) {
+	            _this.scene.add(mesh);
+	            _this.physics.setCollidables([mesh]);
+	        });
+	        this.physics.startClock();
+	        return this;
+	    };
+	    Engine.prototype.initPhysics = function () {
+	        this.physics = new Physics_1.Physics(new THREE.Clock());
 	        return this;
 	    };
 	    Engine.prototype.update = function () {
@@ -141,6 +157,7 @@
 	            this.marble.turnRight(Math.PI / 180);
 	        }
 	        this.camera.update();
+	        this.physics.update();
 	    };
 	    Engine.prototype.render = function () {
 	        this.renderer.render(this.scene, this.camera);
@@ -300,30 +317,141 @@
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var Keyboard_1 = __webpack_require__(5);
+	exports.Keyboard = Keyboard_1.Keyboard;
+	var TextureLoader_1 = __webpack_require__(6);
+	exports.TextureLoader = TextureLoader_1.TextureLoader;
+	var MeshLoader_1 = __webpack_require__(7);
+	exports.MeshLoader = MeshLoader_1.MeshLoader;
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Keyboard = (function () {
+	    function Keyboard(element) {
+	        var _this = this;
+	        this.keyStates = {
+	            87: { ascii: "w", pressed: false },
+	            65: { ascii: "a", pressed: false },
+	            83: { ascii: "s", pressed: false },
+	            68: { ascii: "d", pressed: false }
+	        };
+	        this.element = element || document;
+	        this.element.addEventListener("keydown", function (e) {
+	            if (e.keyCode in _this.keyStates)
+	                _this.setKeyState(e);
+	        });
+	        this.element.addEventListener("keyup", function (e) {
+	            if (e.keyCode in _this.keyStates)
+	                _this.setKeyState(e);
+	        });
+	    }
+	    Keyboard.prototype.setKeyState = function (e) {
+	        this.keyStates[e.keyCode].pressed = (e.type === 'keydown');
+	    };
+	    Keyboard.prototype.isKeyPressed = function (key) {
+	        return this.keyStates[Keyboard.KEYS[key]].pressed;
+	    };
+	    Keyboard.KEYS = {
+	        "w": 87,
+	        "a": 65,
+	        "s": 83,
+	        "d": 68
+	    };
+	    return Keyboard;
+	}());
+	exports.Keyboard = Keyboard;
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var TextureLoader = (function () {
+	    function TextureLoader() {
+	    }
+	    TextureLoader.prototype.loadAll = function (urls) {
+	        var loader = new THREE.TextureLoader();
+	        var promises = urls.map(function (url) {
+	            return Promise.resolve(loader.load(url));
+	        });
+	        return Promise.all(promises);
+	    };
+	    TextureLoader.prototype.load = function (url) {
+	        var loader = new THREE.TextureLoader();
+	        return Promise.resolve(loader.load(url));
+	    };
+	    return TextureLoader;
+	}());
+	exports.TextureLoader = TextureLoader;
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var MeshLoader = (function () {
+	    function MeshLoader() {
+	    }
+	    MeshLoader.prototype.loadAll = function (urls) {
+	        var loader = new THREE.JSONLoader();
+	        var promises = urls.map(function (url) {
+	            return new Promise(function (res, rej) {
+	                loader.load(url, function (geometry) { return res(new THREE.Mesh(geometry)); });
+	            });
+	        });
+	        return Promise.all(promises);
+	    };
+	    MeshLoader.prototype.load = function (url) {
+	        var loader = new THREE.JSONLoader();
+	        return new Promise(function (res, rej) {
+	            loader.load(url, function (geometry) { return res(new THREE.Mesh(geometry)); });
+	        });
+	    };
+	    return MeshLoader;
+	}());
+	exports.MeshLoader = MeshLoader;
+
+
+/***/ },
+/* 8 */
 /***/ function(module, exports) {
 
 	"use strict";
 	var AssetPaths = {
-	    Ground: { ID: 0, URL: 'assets/scratch-metal-texture.jpg' }
+	    Textures: {
+	        Ground: { ID: 0, URL: 'assets/scratch-metal-texture.jpg' }
+	    },
+	    Models: {
+	        Ramp: 'assets/ramp.json'
+	    }
 	};
 	exports.AssetPaths = AssetPaths;
 
 
 /***/ },
-/* 5 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Marble_1 = __webpack_require__(6);
+	var Marble_1 = __webpack_require__(10);
 	exports.Marble = Marble_1.Marble;
-	var Ground_1 = __webpack_require__(9);
+	var Ground_1 = __webpack_require__(13);
 	exports.Ground = Ground_1.Ground;
-	var Skybox_1 = __webpack_require__(10);
+	var Skybox_1 = __webpack_require__(14);
 	exports.Skybox = Skybox_1.Skybox;
 
 
 /***/ },
-/* 6 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -332,7 +460,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Types_1 = __webpack_require__(7);
+	var Types_1 = __webpack_require__(11);
 	var Marble = (function (_super) {
 	    __extends(Marble, _super);
 	    function Marble(config) {
@@ -371,16 +499,16 @@
 
 
 /***/ },
-/* 7 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Mesh_1 = __webpack_require__(8);
+	var Mesh_1 = __webpack_require__(12);
 	exports.Mesh = Mesh_1.Mesh;
 
 
 /***/ },
-/* 8 */
+/* 12 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -426,7 +554,7 @@
 
 
 /***/ },
-/* 9 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -435,7 +563,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Types_1 = __webpack_require__(7);
+	var Types_1 = __webpack_require__(11);
 	var Ground = (function (_super) {
 	    __extends(Ground, _super);
 	    function Ground(texture, config) {
@@ -458,7 +586,7 @@
 
 
 /***/ },
-/* 10 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -467,7 +595,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Types_1 = __webpack_require__(7);
+	var Types_1 = __webpack_require__(11);
 	var Skybox = (function (_super) {
 	    __extends(Skybox, _super);
 	    function Skybox(config) {
@@ -488,94 +616,18 @@
 
 
 /***/ },
-/* 11 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var Keyboard_1 = __webpack_require__(12);
-	exports.Keyboard = Keyboard_1.Keyboard;
-	var TextureLoader_1 = __webpack_require__(13);
-	exports.TextureLoader = TextureLoader_1.TextureLoader;
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var Keyboard = (function () {
-	    function Keyboard(element) {
-	        var _this = this;
-	        this.keyStates = {
-	            87: { ascii: "w", pressed: false },
-	            65: { ascii: "a", pressed: false },
-	            83: { ascii: "s", pressed: false },
-	            68: { ascii: "d", pressed: false }
-	        };
-	        this.element = element || document;
-	        this.element.addEventListener("keydown", function (e) {
-	            if (e.keyCode in _this.keyStates)
-	                _this.setKeyState(e);
-	        });
-	        this.element.addEventListener("keyup", function (e) {
-	            if (e.keyCode in _this.keyStates)
-	                _this.setKeyState(e);
-	        });
-	    }
-	    Keyboard.prototype.setKeyState = function (e) {
-	        this.keyStates[e.keyCode].pressed = (e.type === 'keydown');
-	    };
-	    Keyboard.prototype.isKeyPressed = function (key) {
-	        return this.keyStates[Keyboard.KEYS[key]].pressed;
-	    };
-	    Keyboard.KEYS = {
-	        "w": 87,
-	        "a": 65,
-	        "s": 83,
-	        "d": 68
-	    };
-	    return Keyboard;
-	}());
-	exports.Keyboard = Keyboard;
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var TextureLoader = (function () {
-	    function TextureLoader() {
-	    }
-	    TextureLoader.prototype.loadAll = function (urls) {
-	        var loader = new THREE.TextureLoader();
-	        var promises = urls.map(function (url) {
-	            return Promise.resolve(loader.load(url));
-	        });
-	        return Promise.all(promises);
-	    };
-	    TextureLoader.prototype.load = function (url) {
-	        var loader = new THREE.TextureLoader();
-	        return Promise.resolve(loader.load(url));
-	    };
-	    return TextureLoader;
-	}());
-	exports.TextureLoader = TextureLoader;
-
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var AssetPaths_1 = __webpack_require__(4);
+	var AssetPaths_1 = __webpack_require__(8);
 	exports.AssetPaths = AssetPaths_1.AssetPaths;
-	var ViewportDefaults_1 = __webpack_require__(15);
+	var ViewportDefaults_1 = __webpack_require__(16);
 	exports.ViewportDefaults = ViewportDefaults_1.ViewportDefaults;
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -588,6 +640,44 @@
 	    FAR: 1000
 	};
 	exports.ViewportDefaults = ViewportDefaults;
+
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Physics = (function () {
+	    function Physics(clock) {
+	        this.clock = clock;
+	        this.trackedMeshes = [];
+	        this.collidables = [];
+	    }
+	    Physics.prototype.startClock = function (delay) {
+	        delay ? setTimeout(this.clock.start, delay) : this.clock.start();
+	    };
+	    Physics.prototype.setCollidables = function (meshes) {
+	        this.collidables = meshes;
+	    };
+	    Physics.prototype.track = function (mesh) {
+	        this.trackedMeshes.push(mesh);
+	    };
+	    Physics.prototype.update = function () {
+	        var dt = this.clock.getDelta(); // use this eventually
+	        // WARNING: bad code!
+	        for (var _i = 0, _a = this.trackedMeshes; _i < _a.length; _i++) {
+	            var trackedMesh = _a[_i];
+	            for (var _b = 0, _c = this.collidables; _b < _c.length; _b++) {
+	                var collidable = _c[_b];
+	                if (trackedMesh.collidesWith(collidable)) {
+	                    console.log("A collision occured!");
+	                }
+	            }
+	        }
+	    };
+	    return Physics;
+	}());
+	exports.Physics = Physics;
 
 
 /***/ }
